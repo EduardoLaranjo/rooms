@@ -1,9 +1,9 @@
 package main
 
 import (
+	"dottime.dev/room/internal/database"
 	"dottime.dev/room/internal/web"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 	"os"
@@ -26,14 +26,14 @@ func main() {
 	viper.SetDefault("ReadTimeout", 3000)
 	viper.SetDefault("WriteTimeout", 3000)
 
-	type config struct {
+	type webConfig struct {
 		Address      string
 		Port         int
 		ReadTimeout  int
 		WriteTimeout int
 	}
 
-	var cfg config
+	var cfg webConfig
 
 	err := viper.Unmarshal(&cfg)
 
@@ -41,9 +41,9 @@ func main() {
 		log.Fatal("fatal on parsing config.\nProbably you add new config without default a option.")
 	}
 
-	db, _ := sqlx.Open("", "")
+	db, _ := database.Open(log)
 
-	router := web.NewRouter(log, db)
+	router := web.NewServer(log, db)
 
 	server := http.Server{
 		Addr:              cfg.Address + ":" + strconv.Itoa(cfg.Port),
