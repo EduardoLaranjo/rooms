@@ -1,38 +1,40 @@
 package web
 
 import (
-	"dottime.dev/room/internal/business"
+	"dottime.dev/room/cmd/rooms/handlers"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 )
 
-type RouterMux struct {
+type routerMux struct {
 	log *log.Logger
 	mux *http.ServeMux
-	// router *someRouter
-	// email  EmailSender
 }
 
-func NewRouter(log *log.Logger, db *sqlx.DB) *RouterMux {
+func NewServer(log *log.Logger, db *sqlx.DB) *routerMux {
 
-	s := &RouterMux{
+	s := &routerMux{
 		log: log,
 		mux: http.NewServeMux(),
 	}
 
-	c := business.NewChat(log, db)
+	c := handlers.NewChat(log, db)
 
-	s.registerHandler("/", c.Homepage())
+	s.registerHandler("/", c.Homepage(), logMiddleware(log))
 
 	return s
 }
 
-func (s *RouterMux) registerHandler(pattern string, handlerFunc http.HandlerFunc, middleware ...http.HandlerFunc) {
-	s.mux.HandleFunc(pattern, handlerFunc)
+func (s *routerMux) registerHandler(pattern string, handler http.HandlerFunc, middlewares ...Middleware) {
+
+	for _, middleware := range middlewares {
+		handler = middleware(handler)
+	}
+
+	s.mux.HandleFunc(pattern, handler)
 }
 
-func (s *RouterMux) ServeHTTP(writer http.ResponseWriter, reader *http.Request) {
-	log.Println(reader)
-	s.mux.ServeHTTP(writer, reader)
+func (s *routerMux) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	s.mux.ServeHTTP(writer, request)
 }

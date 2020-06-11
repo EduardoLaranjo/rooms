@@ -1,4 +1,4 @@
-package business
+package handlers
 
 import (
 	"github.com/jmoiron/sqlx"
@@ -11,6 +11,8 @@ type Chat struct {
 	*sqlx.DB
 }
 
+const ContextId string = "id"
+
 func NewChat(log *log.Logger, db *sqlx.DB) *Chat {
 	return &Chat{
 		Logger: log,
@@ -20,6 +22,7 @@ func NewChat(log *log.Logger, db *sqlx.DB) *Chat {
 
 func (c *Chat) Homepage() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
+		id := request.Context().Value(ContextId).(string)
+		writer.Write([]byte(id))
 	}
 }
